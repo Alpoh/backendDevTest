@@ -1,5 +1,6 @@
 package camedina.co.devtest.domain;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -21,8 +22,12 @@ class FindSimilarProductsServiceTest {
     @Mock
     private FindProductDetail findProductDetail;
 
-    private final FindSimilarProductsService service =
-            new FindSimilarProductsService(obtainSimilarIds, findProductDetail);
+    private FindSimilarProductsService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new FindSimilarProductsService(obtainSimilarIds, findProductDetail);
+    }
 
     @Test
     void returnsProductDetailsInSimilarityOrderEvenWhenTheyResolveOutOfOrder() {
