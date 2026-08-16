@@ -1,7 +1,9 @@
 package camedina.co.devtest.domain;
 
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
+@Component
 class FindSimilarProductsService implements FindSimilarProducts {
 
     private final ObtainSimilarIds obtainSimilarIds;
