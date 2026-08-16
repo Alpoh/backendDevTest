@@ -1,5 +1,6 @@
 package camedina.co.devtest.adapter.out.client;
 
+import camedina.co.devtest.domain.ProductNotFoundException;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -27,5 +28,17 @@ class SimilarIdsClientTest {
         StepVerifier.create(client.obtainSimilarIds("1"))
                 .expectNext("2", "3", "4")
                 .verifyComplete();
+    }
+
+    @Test
+    void raisesProductNotFoundWhenUpstreamSimilarIdsIs404() {
+        wireMock.stubFor(get(urlEqualTo("/product/1/similarids"))
+                .willReturn(aResponse().withStatus(404)));
+
+        var client = new SimilarIdsClient(WebClient.create(wireMock.baseUrl()));
+
+        StepVerifier.create(client.obtainSimilarIds("1"))
+                .expectError(ProductNotFoundException.class)
+                .verify();
     }
 }

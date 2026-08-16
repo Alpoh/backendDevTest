@@ -2,6 +2,7 @@ package camedina.co.devtest.adapter.in.web;
 
 import camedina.co.devtest.domain.FindSimilarProducts;
 import camedina.co.devtest.domain.ProductDetail;
+import camedina.co.devtest.domain.ProductNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
@@ -33,5 +34,15 @@ class ProductSimilarControllerTest {
                 .expectStatus().isOk()
                 .expectBodyList(ProductDetail.class)
                 .isEqualTo(List.of(product2));
+    }
+
+    @Test
+    void returnsNotFoundWhenProductDoesNotExist() {
+        when(findSimilarProducts.findSimilarProducts("1"))
+                .thenReturn(Flux.error(new ProductNotFoundException("1")));
+
+        webTestClient.get().uri("/product/1/similar")
+                .exchange()
+                .expectStatus().isNotFound();
     }
 }
