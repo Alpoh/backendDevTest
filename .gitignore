@@ -15,7 +15,7 @@ buildNumber.properties
 *.iml
 *.iws
 *.ipr
-out/
+/out/
 .run/
 
 # Java

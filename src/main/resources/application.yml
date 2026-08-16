@@ -1,2 +1,5 @@
 server:
   port: 5000
+
+upstream:
+  base-url: http://localhost:3001
