@@ -29,6 +29,7 @@ replay_pid*
 # Spring Boot
 application-local.yml
 application-local.properties
+keystore.p12
 
 # OS
 .DS_Store
