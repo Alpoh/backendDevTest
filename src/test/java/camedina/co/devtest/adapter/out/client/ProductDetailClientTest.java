@@ -42,4 +42,16 @@ class ProductDetailClientTest {
                 .expectError(ProductDetailUnavailableException.class)
                 .verify();
     }
+
+    @Test
+    void raisesProductDetailUnavailableWhenUpstreamProductReturns500() {
+        wireMock.stubFor(get(urlEqualTo("/product/6"))
+                .willReturn(aResponse().withStatus(500)));
+
+        var client = new ProductDetailClient(WebClient.create(wireMock.baseUrl()));
+
+        StepVerifier.create(client.findProductDetail("6"))
+                .expectError(ProductDetailUnavailableException.class)
+                .verify();
+    }
 }
