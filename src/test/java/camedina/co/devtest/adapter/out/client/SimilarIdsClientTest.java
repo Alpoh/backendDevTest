@@ -41,4 +41,17 @@ class SimilarIdsClientTest {
                 .expectError(ProductNotFoundException.class)
                 .verify();
     }
+
+    @Test
+    void returnsEmptyWhenUpstreamSimilarIdsIsAnEmptyList() {
+        wireMock.stubFor(get(urlEqualTo("/product/1/similarids"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("[]")));
+
+        var client = new SimilarIdsClient(WebClient.create(wireMock.baseUrl()));
+
+        StepVerifier.create(client.obtainSimilarIds("1"))
+                .verifyComplete();
+    }
 }

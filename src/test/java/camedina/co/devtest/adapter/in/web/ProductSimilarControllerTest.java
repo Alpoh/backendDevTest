@@ -49,6 +49,18 @@ class ProductSimilarControllerTest {
     }
 
     @Test
+    void returnsEmptyListWhenProductHasNoSimilarProducts() {
+        when(findSimilarProducts.findSimilarProducts("1"))
+                .thenReturn(Flux.empty());
+
+        webTestClient.get().uri("/product/1/similar")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(ProductDetail.class)
+                .isEqualTo(List.of());
+    }
+
+    @Test
     void returnsBadGatewayWhenASimilarProductDetailIsUnavailable() {
         var product2 = new ProductDetail("2", "Product 2", 20.5, true);
         when(findSimilarProducts.findSimilarProducts("1"))
