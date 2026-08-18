@@ -2,8 +2,10 @@ package camedina.co.devtest.adapter.out.client;
 
 import camedina.co.devtest.domain.FindProductDetail;
 import camedina.co.devtest.domain.ProductDetail;
+import camedina.co.devtest.domain.ProductDetailUnavailableException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -21,6 +23,7 @@ class ProductDetailClient implements FindProductDetail {
                 .uri("/product/{productId}", productId)
                 .retrieve()
                 .bodyToMono(UpstreamProductDetail.class)
-                .map(upstream -> new ProductDetail(upstream.id(), upstream.name(), upstream.price(), upstream.availability()));
+                .map(upstream -> new ProductDetail(upstream.id(), upstream.name(), upstream.price(), upstream.availability()))
+                .onErrorMap(NotFound.class, _ -> new ProductDetailUnavailableException(productId));
     }
 }

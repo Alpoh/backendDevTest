@@ -1,6 +1,7 @@
 package camedina.co.devtest.adapter.out.client;
 
 import camedina.co.devtest.domain.ProductDetail;
+import camedina.co.devtest.domain.ProductDetailUnavailableException;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -28,5 +29,17 @@ class ProductDetailClientTest {
         StepVerifier.create(client.findProductDetail("2"))
                 .expectNext(new ProductDetail("2", "Product 2", 20.5, true))
                 .verifyComplete();
+    }
+
+    @Test
+    void raisesProductDetailUnavailableWhenUpstreamProductIs404() {
+        wireMock.stubFor(get(urlEqualTo("/product/5"))
+                .willReturn(aResponse().withStatus(404)));
+
+        var client = new ProductDetailClient(WebClient.create(wireMock.baseUrl()));
+
+        StepVerifier.create(client.findProductDetail("5"))
+                .expectError(ProductDetailUnavailableException.class)
+                .verify();
     }
 }
