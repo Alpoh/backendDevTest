@@ -13,7 +13,7 @@
 
     <groupId>camedina.co</groupId>
     <artifactId>devtest</artifactId>
-    <version>0.0.7-SNAPSHOT</version>
+    <version>0.0.8-SNAPSHOT</version>
     <name>devtest</name>
     <description>Similar products API - backend technical test</description>
 
