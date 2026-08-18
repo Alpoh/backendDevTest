@@ -9,8 +9,13 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.reactive.function.client.WebClientResponseException.NotFound;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
+
 @Component
 class ProductDetailClient implements FindProductDetail {
+
+    private static final Duration UPSTREAM_TIMEOUT = Duration.ofSeconds(6);
 
     private final WebClient webClient;
 
@@ -24,8 +29,10 @@ class ProductDetailClient implements FindProductDetail {
                 .uri("/product/{productId}", productId)
                 .retrieve()
                 .bodyToMono(UpstreamProductDetail.class)
+                .timeout(UPSTREAM_TIMEOUT)
                 .map(upstream -> new ProductDetail(upstream.id(), upstream.name(), upstream.price(), upstream.availability()))
                 .onErrorMap(NotFound.class, _ -> new ProductDetailUnavailableException(productId))
-                .onErrorMap(InternalServerError.class, _ -> new ProductDetailUnavailableException(productId));
+                .onErrorMap(InternalServerError.class, _ -> new ProductDetailUnavailableException(productId))
+                .onErrorMap(TimeoutException.class, _ -> new ProductDetailUnavailableException(productId));
     }
 }

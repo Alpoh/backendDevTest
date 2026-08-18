@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.test.StepVerifier;
 
+import java.time.Duration;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -53,5 +55,20 @@ class ProductDetailClientTest {
         StepVerifier.create(client.findProductDetail("6"))
                 .expectError(ProductDetailUnavailableException.class)
                 .verify();
+    }
+
+    @Test
+    void raisesProductDetailUnavailableWhenUpstreamProductTimesOut() {
+        wireMock.stubFor(get(urlEqualTo("/product/10000"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"id\":\"10000\",\"name\":\"Leather jacket\",\"price\":89.99,\"availability\":true}")
+                        .withFixedDelay(7000)));
+
+        var client = new ProductDetailClient(WebClient.create(wireMock.baseUrl()));
+
+        StepVerifier.create(client.findProductDetail("10000"))
+                .expectError(ProductDetailUnavailableException.class)
+                .verify(Duration.ofSeconds(8));
     }
 }
