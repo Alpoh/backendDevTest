@@ -2,7 +2,6 @@ package camedina.co.devtest.adapter.in.web;
 
 import camedina.co.devtest.domain.FindSimilarProducts;
 import camedina.co.devtest.domain.ProductDetail;
-import camedina.co.devtest.domain.ProductDetailUnavailableException;
 import camedina.co.devtest.domain.ProductNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,10 +30,5 @@ class ProductSimilarController {
     @ExceptionHandler(ProductNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     void handleProductNotFound() {
-    }
-
-    @ExceptionHandler(ProductDetailUnavailableException.class)
-    @ResponseStatus(HttpStatus.BAD_GATEWAY)
-    void handleProductDetailUnavailable() {
     }
 }

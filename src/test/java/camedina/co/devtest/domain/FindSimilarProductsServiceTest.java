@@ -72,4 +72,32 @@ class FindSimilarProductsServiceTest {
 
         assertThat(maxObservedConcurrency.get()).isLessThanOrEqualTo(5);
     }
+
+    @Test
+    void skipsProductDetailLookupsThatFailAndReturnsTheRestInOrder() {
+        var first = new ProductDetail("2", "Product 2", 20.0, true);
+        var third = new ProductDetail("4", "Product 4", 40.0, true);
+
+        when(obtainSimilarIds.obtainSimilarIds("1")).thenReturn(Flux.just("2", "3", "4"));
+        when(findProductDetail.findProductDetail("2")).thenReturn(Mono.just(first));
+        when(findProductDetail.findProductDetail("3"))
+                .thenReturn(Mono.error(new ProductDetailUnavailableException("3")));
+        when(findProductDetail.findProductDetail("4")).thenReturn(Mono.just(third));
+
+        StepVerifier.create(service.findSimilarProducts("1"))
+                .expectNext(first, third)
+                .verifyComplete();
+    }
+
+    @Test
+    void returnsEmptyWhenEveryProductDetailLookupFails() {
+        when(obtainSimilarIds.obtainSimilarIds("1")).thenReturn(Flux.just("2", "3"));
+        when(findProductDetail.findProductDetail("2"))
+                .thenReturn(Mono.error(new ProductDetailUnavailableException("2")));
+        when(findProductDetail.findProductDetail("3"))
+                .thenReturn(Mono.error(new ProductDetailUnavailableException("3")));
+
+        StepVerifier.create(service.findSimilarProducts("1"))
+                .verifyComplete();
+    }
 }

@@ -2,6 +2,7 @@ package camedina.co.devtest.domain;
 
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Component
 class FindSimilarProductsService implements FindSimilarProducts {
@@ -19,6 +20,11 @@ class FindSimilarProductsService implements FindSimilarProducts {
     @Override
     public Flux<ProductDetail> findSimilarProducts(String productId) {
         return obtainSimilarIds.obtainSimilarIds(productId)
-                .flatMapSequential(findProductDetail::findProductDetail, MAX_CONCURRENT_DETAIL_LOOKUPS);
+                .flatMapSequential(this::findProductDetailOrSkip, MAX_CONCURRENT_DETAIL_LOOKUPS);
+    }
+
+    private Mono<ProductDetail> findProductDetailOrSkip(String id) {
+        return findProductDetail.findProductDetail(id)
+                .onErrorResume(ProductDetailUnavailableException.class, _ -> Mono.empty());
     }
 }
