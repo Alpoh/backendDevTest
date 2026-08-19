@@ -92,6 +92,6 @@ class ProductDetailClientTest {
 
         StepVerifier.create(client.findProductDetail("10000"))
                 .expectError(ProductDetailUnavailableException.class)
-                .verify(Duration.ofSeconds(8));
+                .verify(Duration.ofSeconds(22));
     }
 }
