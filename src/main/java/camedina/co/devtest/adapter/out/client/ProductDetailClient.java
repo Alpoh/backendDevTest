@@ -3,6 +3,9 @@ package camedina.co.devtest.adapter.out.client;
 import camedina.co.devtest.domain.FindProductDetail;
 import camedina.co.devtest.domain.ProductDetail;
 import camedina.co.devtest.domain.ProductDetailUnavailableException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException.InternalServerError;
@@ -21,9 +24,11 @@ class ProductDetailClient implements FindProductDetail {
     private static final Duration RETRY_DELAY = Duration.ofSeconds(1);
 
     private final WebClient webClient;
+    private final CircuitBreaker productDetailCircuitBreaker;
 
-    ProductDetailClient(WebClient webClient) {
+    ProductDetailClient(WebClient webClient, CircuitBreaker productDetailCircuitBreaker) {
         this.webClient = webClient;
+        this.productDetailCircuitBreaker = productDetailCircuitBreaker;
     }
 
     @Override
@@ -36,10 +41,12 @@ class ProductDetailClient implements FindProductDetail {
                 .retryWhen(Retry.fixedDelay(MAX_RETRIES, RETRY_DELAY)
                         .filter(ProductDetailClient::isTransientUpstreamError)
                         .onRetryExhaustedThrow((_, signal) -> signal.failure()))
+                .transformDeferred(CircuitBreakerOperator.of(productDetailCircuitBreaker))
                 .map(upstream -> new ProductDetail(upstream.id(), upstream.name(), upstream.price(), upstream.availability()))
                 .onErrorMap(NotFound.class, _ -> new ProductDetailUnavailableException(productId))
                 .onErrorMap(InternalServerError.class, _ -> new ProductDetailUnavailableException(productId))
-                .onErrorMap(TimeoutException.class, _ -> new ProductDetailUnavailableException(productId));
+                .onErrorMap(TimeoutException.class, _ -> new ProductDetailUnavailableException(productId))
+                .onErrorMap(CallNotPermittedException.class, _ -> new ProductDetailUnavailableException(productId));
     }
 
     private static boolean isTransientUpstreamError(Throwable throwable) {
