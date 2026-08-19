@@ -13,6 +13,7 @@ import java.time.Duration;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 
 class ProductDetailClientTest {
 
@@ -55,6 +56,28 @@ class ProductDetailClientTest {
         StepVerifier.create(client.findProductDetail("6"))
                 .expectError(ProductDetailUnavailableException.class)
                 .verify();
+    }
+
+    @Test
+    void retriesOnceAndSucceedsWhenUpstreamProductRecoversAfterA500() {
+        wireMock.stubFor(get(urlEqualTo("/product/7"))
+                .inScenario("upstream-recovery")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse().withStatus(500))
+                .willSetStateTo("recovered"));
+
+        wireMock.stubFor(get(urlEqualTo("/product/7"))
+                .inScenario("upstream-recovery")
+                .whenScenarioStateIs("recovered")
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"id\":\"7\",\"name\":\"Product 7\",\"price\":7.5,\"availability\":true}")));
+
+        var client = new ProductDetailClient(WebClient.create(wireMock.baseUrl()));
+
+        StepVerifier.create(client.findProductDetail("7"))
+                .expectNext(new ProductDetail("7", "Product 7", 7.5, true))
+                .verifyComplete();
     }
 
     @Test
