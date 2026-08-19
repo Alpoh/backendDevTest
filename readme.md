@@ -31,3 +31,30 @@ The following topics will be considered:
 - Code clarity and maintainability
 - Performance
 - Resilience
+
+## devTest application
+
+The implementation lives under `src/`, as a Spring Boot 4 / Java 25 Maven project using a lightweight hexagonal (ports & adapters) architecture:
+
+```
+domain/              use case + inbound/outbound ports + domain model
+adapter/in/web/      REST controller (inbound adapter)
+adapter/out/client/  WebClient-based upstream clients (outbound adapters)
+config/              Spring configuration (WebClient bean, etc.)
+```
+
+See `CLAUDE.md` for the build order and conventions followed, and `CHANGELOG.md` for what's implemented so far.
+
+### Running locally
+
+Build and run with Maven:
+```
+mvn spring-boot:run
+```
+The app listens on port 5000, calling the upstream mocks at `http://localhost:3001` (override with the `upstream.base-url` property).
+
+For manual browser/curl testing over HTTPS, activate the `local` profile (a gitignored self-signed `keystore.p12` is generated once and referenced from `application-local.yml`):
+```
+SPRING_PROFILES_ACTIVE=local mvn spring-boot:run
+```
+Then hit `https://localhost:5000/...` (self-signed, so `curl -k` or click through the browser warning). The default profile stays plain HTTP so the k6 load test above is unaffected.
