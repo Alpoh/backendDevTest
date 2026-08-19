@@ -6,6 +6,8 @@ import reactor.core.publisher.Flux;
 @Component
 class FindSimilarProductsService implements FindSimilarProducts {
 
+    private static final int MAX_CONCURRENT_DETAIL_LOOKUPS = 5;
+
     private final ObtainSimilarIds obtainSimilarIds;
     private final FindProductDetail findProductDetail;
 
@@ -17,6 +19,6 @@ class FindSimilarProductsService implements FindSimilarProducts {
     @Override
     public Flux<ProductDetail> findSimilarProducts(String productId) {
         return obtainSimilarIds.obtainSimilarIds(productId)
-                .flatMapSequential(findProductDetail::findProductDetail);
+                .flatMapSequential(findProductDetail::findProductDetail, MAX_CONCURRENT_DETAIL_LOOKUPS);
     }
 }
